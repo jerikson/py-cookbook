@@ -181,3 +181,202 @@ q.push(Item('bar'), 5)
 q.push(Item('spam'), 4)
 q.push(Item('grok'), 1)
 q.pop()
+
+# 1.6. Mapping Keys to Multiple Values in a Dictionary
+
+'''
+A dictionary is a mapping where each key is mapped to a single value.
+If you want to map keys to multiple values, you need to store the multiple values
+in another container such as a list or set. For example, you might make dicts
+like this:
+'''
+
+d = {
+    'a': [1, 2, 3],
+    'b': [4, 5]
+}
+
+e = {
+    'a': {1, 2, 3},
+    'b': {4, 5}
+}
+
+from collections import defaultdict
+d = defaultdict(list)
+d['a'].append(1)
+d['a'].append(2)
+d['a'].append(4)
+
+d = defaultdict(set)
+
+d['a'].add(1)
+d['a'].add(2)
+d['b'].add(4)
+
+d = {} # A regular dictionary
+d.setdefault('a', []).append(1)
+d.setdefault('a', []).append(2)
+d.setdefault('b', []).append(4)
+
+'''
+d = {}
+for key, value in pairs:
+    if key not in d:
+        d[key] = []
+    d[key].append(value)
+
+# using a defaultdict simply leads to much cleaner code
+d = defaultdict(list)
+for key, value in pairs:
+    d[key].append(value)
+'''
+
+# 1.7. Keeping Dictionaries in Order
+'''
+To control the order of items in a dictionary you can use an OrderedDict from
+the collections module. It exactly preserves the original insertion order of
+data when iterating. For example:
+'''
+from collections import OrderedDict
+d = OrderedDict()
+d['foo'] = 1
+d['bar'] = 2
+d['baz'] = 3
+d['qux'] = 4
+
+# Outputs "foo 1", "bar 2", "baz 3", "qux 4"
+for key in d:
+    print(key, d[key])
+
+'''
+An OrderedDict can be particularly useful when you want to build a mapping that
+you may want to later serialize or encode into a different format. For example
+if you want to precisely control the order of fields appearing in a JSON enconding
+first buildning the data in the OrderedDict will do the trick:
+'''
+import json
+print(json.dumps(d)) #{"foo": 1, "bar":2, "baz": 3, "qux": 4}
+
+'''
+Consider a dictionary that maps stock names to prices
+'''
+#1.8. Calculating with Dictionaries
+
+prices = {
+    'ACME': 45.23,
+    'AAPL': 612.78,
+    'IBM': 205.55,
+    'HPQ': 37.20,
+    'FB': 10.75
+}
+
+'''
+In order to perform useful calculations on the dctionary contents, it is often
+useful to invert the keys and values of the dict using zip(). For example,
+here is a how to find the minimum price and stock name:
+'''
+
+min_price = min(zip(prices.values(), prices.keys()))
+max_price = max(zip(prices.values(), prices.keys()))
+print (min_price) # (10.75, 'FB')
+print (max_price) # (612.78, 'AAPL')
+
+# Similarly to rank the data use zip() with sorted() as in the following:
+prices_sorted = sorted(zip(prices.values(), prices.keys()))
+print (prices_sorted) # [(10.75, 'FB'), (37.2, 'HPQ'), (45.23, 'ACME'), (205.55, 'IBM'), (612.78, 'AAPL')]
+
+'''
+If you try to perform common data reductions on a dictionary, you'll find that
+they only process the keys, not the values, for example:
+'''
+
+print (min(prices)) # AAPL
+print (max(prices)) # IBM
+
+'''
+This is probably not what you want because you're actually trying to perform a
+calculation involving the dictionary values. You might try to fix this using
+the values() method of a dictionary:
+'''
+
+print (min(prices.values())) # 10.75
+print (max(prices.values())) # 612.78
+
+'''
+Unfortunately this is often not exactly what you want either. For example
+you may want to know information about the corresponding keys (eg. which stock
+has the lowest price?)
+
+You can get the key corresponding to the min or max value if you supply a key
+function to min() or max(). For example:
+'''
+print (min(prices, key=lambda k: prices[k])) # returns 'FB'
+print (max(prices, key=lambda k: prices[k])) # returns 'AAPL'
+
+'''
+However to get the minimum value, you'll need to perform an extra lookup step.
+For example:
+'''
+
+min_value = prices[min(prices, key=lambda k: prices[k])]
+print (min_value) # 10.75
+
+'''
+The solution involving zip() solves the problem by "inverting" the dictionary
+into a sequence of (value, key) pairs. When performing comparisons on such
+tuples, the value element is compared first, followed by the key. This
+gives you exactly the behaviour that you want and allows reductions and sorting
+to be easily performed on the dictionary contents using a single statement.
+
+It should be noted that in calculations involving (value, key) pairs, the key
+will be used to determine the result in instances where multiple entries happen
+to have the same value. For instance, in calculations such as min() and max()
+the entry with the smallest or largest key will be returned if there happen
+to be a duplicate values. For example
+'''
+
+prices = {'AAA': 45.23, 'ZZZ': 45.23}
+print (min(zip(prices.values(), prices.keys()))) # (45.23, 'AAA')
+print (max(zip(prices.values(), prices.keys()))) # (45.23, 'ZZZ')
+
+# 1.9. Finding Commonalities in Two Dictionaries
+'''
+If you have 2 dicts and want to find out what they might have in common
+(same keys, values etc) Consider 2 dictionaries:
+'''
+
+a = {
+    'x': 1,
+    'y': 2,
+    'z': 3
+}
+
+b = {
+    'w': 10,
+    'x': 11,
+    'y': 2
+}
+
+'''
+To find out what the 2 dicts have in common, simply perform common set operations
+using keys() or items() methods, for example:
+'''
+
+# Find keys in common
+print(a.keys() & b.keys()) # { 'x', 'y'}
+
+# Find keys in a that are not in b
+print (a.keys() - b.keys()) # {'z'}
+
+# Find (key, value) pairs in common
+print (a.items() & b.items()) # {('y', 2)}
+
+'''
+These kinds of operations can also be used to alter or filter dictionary
+contents. For example, suppose you want to make a new dictionary with selected
+keys removed. Here is some sample code using a dictionary comprehension
+'''
+
+# Make a new dictionary with certain keys removed
+c = {key:a[key] for key in a.keys() - {'z', 'w'}}
+print (c) # {'y': 2, 'x': 1}
