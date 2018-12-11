@@ -1,0 +1,6 @@
+first wow
+this is some data file containing python
+this line is the second line with a 5 (five) in it
+third line of  'python' in .txt
+another line
+fifth row
